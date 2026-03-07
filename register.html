@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會員註冊 - 喬美卡巴拉島</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --accent: #f59e0b;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --dark-lighter: #334155;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: var(--dark);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px 0;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            font-weight: 900;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .logo-icon {
+            color: var(--accent);
+            font-size: 28px;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 10px var(--accent); }
+            50% { text-shadow: 0 0 30px var(--accent), 0 0 50px var(--accent); }
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .back-btn:hover {
+            color: var(--primary-light);
+        }
+
+        .register-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .register-box {
+            background: var(--dark-light);
+            border-radius: 20px;
+            padding: 50px 40px;
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid var(--dark-lighter);
+        }
+
+        .register-title {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 900;
+            margin-bottom: 10px;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .register-subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 1px solid var(--dark-lighter);
+            background: var(--dark);
+            color: var(--text);
+            font-size: 16px;
+            font-family: 'Noto Sans TC', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+
+        .register-btn {
+            width: 100%;
+            padding: 18px;
+            border-radius: 12px;
+            border: none;
+            background: var(--gradient-1);
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'Noto Sans TC', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .register-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 30px 0;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--dark-lighter);
+        }
+
+        .divider span {
+            padding: 0 15px;
+        }
+
+        .social-register {
+            display: flex;
+            gap: 15px;
+        }
+
+        .social-btn {
+            flex: 1;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid var(--dark-lighter);
+            background: var(--dark);
+            color: var(--text);
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .social-btn:hover {
+            border-color: var(--primary);
+            background: var(--dark-lighter);
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 30px;
+            color: var(--text-muted);
+        }
+
+        .login-link a {
+            color: var(--primary-light);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        .footer {
+            background: var(--dark);
+            border-top: 1px solid var(--dark-lighter);
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        .footer-content {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        @media (max-width: 480px) {
+            .register-box {
+                padding: 30px 20px;
+            }
+            
+            .register-title {
+                font-size: 26px;
+            }
+            
+            .social-register {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <span class="logo-icon">✦</span>
+                <span>喬美卡巴拉島</span>
+            </a>
+            <a href="index.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                返回官網
+            </a>
+        </div>
+    </nav>
+
+    <div class="register-container">
+        <div class="register-box">
+            <h1 class="register-title">會員註冊</h1>
+            <p class="register-subtitle">建立帳號，展開你的冒險之旅</p>
+
+            <form id="registerForm">
+                <div class="form-group">
+                    <label>帳號</label>
+                    <input type="text" name="username" placeholder="請輸入帳號" required>
+                </div>
+                <div class="form-group">
+                    <label>電子郵件</label>
+                    <input type="email" name="email" placeholder="請輸入電子郵件" required>
+                </div>
+                <div class="form-group">
+                    <label>密碼</label>
+                    <input type="password" name="password" placeholder="請輸入密碼" required>
+                </div>
+                <div class="form-group">
+                    <label>確認密碼</label>
+                    <input type="password" name="confirmPassword" placeholder="請再次輸入密碼" required>
+                </div>
+                <button type="submit" class="register-btn">註冊</button>
+            </form>
+
+            <div class="divider">
+                <span>或使用以下方式註冊</span>
+            </div>
+
+            <div class="social-register">
+                <button class="social-btn">
+                    <i class="fab fa-google"></i>
+                </button>
+                <button class="social-btn">
+                    <i class="fab fa-facebook-f"></i>
+                </button>
+                <button class="social-btn">
+                    <i class="fab fa-discord"></i>
+                </button>
+            </div>
+
+            <p class="login-link">
+                已經有帳號了？ <a href="login.html">登入</a>
+            </p>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            © 2026 喬美卡巴拉島. All Rights Reserved.
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const username = form.username.value;
+            const email = form.email.value;
+            const password = form.password.value;
+            const confirmPassword = form.confirmPassword.value;
+            
+            if (password !== confirmPassword) {
+                alert('密碼與確認密碼不一致！');
+                return;
+            }
+            
+            const btn = form.querySelector('.register-btn');
+            btn.disabled = true;
+            btn.textContent = '註冊中...';
+            
+            const apiUrl = 'https://game-backend-20jn.onrender.com';
+            
+            try {
+                const response = await fetch(`${apiUrl}/api/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('註冊成功！');
+                    window.location.href = 'index.html';
+                } else {
+                    alert('註冊失敗：' + data.error);
+                }
+            } catch (error) {
+                alert('連線錯誤，請稍後再試');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '註冊';
+        });
+    </script>
+</body>
+</html>
