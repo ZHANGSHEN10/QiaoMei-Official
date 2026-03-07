@@ -89,10 +89,12 @@ app.post('/api/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
 
-    await admin.auth().generatePasswordResetLink(email);
+    const link = await admin.auth().generatePasswordResetLink(email);
+    console.log('Password reset link:', link);
 
     res.json({ success: true, message: '重設連結已發送' });
   } catch (error) {
+    console.error('Forgot password error:', error);
     res.status(400).json({ success: false, error: error.message });
   }
 });
