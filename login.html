@@ -307,8 +307,8 @@
 
             <form id="loginForm">
                 <div class="form-group">
-                    <label>電子郵件</label>
-                    <input type="email" name="email" placeholder="請輸入電子郵件" required>
+                    <label>帳號</label>
+                    <input type="text" name="username" placeholder="請輸入帳號" required>
                 </div>
                 <div class="form-group">
                     <label>密碼</label>
@@ -353,7 +353,7 @@
             e.preventDefault();
             
             const form = e.target;
-            const email = form.email.value;
+            const username = form.username.value;
             const password = form.password.value;
             
             const btn = form.querySelector('.login-btn');
@@ -368,7 +368,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify({ username, password })
                 });
                 
                 const data = await response.json();
@@ -376,7 +376,7 @@
                 if (data.success) {
                     localStorage.setItem('user', JSON.stringify(data.user));
                     alert('登入成功！');
-                    window.location.href = 'index.html';
+                    window.location.href = 'member.html';
                 } else {
                     alert('登入失敗：' + data.error);
                 }
