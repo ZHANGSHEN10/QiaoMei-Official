@@ -153,6 +153,19 @@ ul {
     box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
 }
 
+.btn-member {
+    background: var(--gradient-2) !important;
+    padding: 10px 25px !important;
+    border-radius: 30px;
+    color: white !important;
+    font-weight: 600;
+}
+
+.btn-member:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(236, 72, 153, 0.4);
+}
+
 .hamburger {
     display: none;
     flex-direction: column;

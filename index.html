@@ -23,7 +23,8 @@
                 <li><a href="#characters">角色</a></li>
                 <li><a href="#features">特色</a></li>
                 <li><a href="#download">加入我們</a></li>
-                <li><a href="register.html" class="btn-download">會員註冊</a></li>
+                <li><a href="member.html" class="btn-member" id="memberLink">會員專區</a></li>
+                <li><a href="register.html" class="btn-download" id="registerLink">會員註冊</a></li>
             </ul>
             <div class="hamburger">
                 <span></span>
@@ -270,5 +271,27 @@
     </footer>
 
     <script src="script.js"></script>
+    <script>
+        function checkLogin() {
+            const userData = localStorage.getItem('user');
+            const memberLink = document.getElementById('memberLink');
+            const registerLink = document.getElementById('registerLink');
+            
+            if (userData) {
+                const user = JSON.parse(userData);
+                const username = user.username || user.email.split('@')[0];
+                memberLink.textContent = username;
+                memberLink.href = 'member.html';
+                registerLink.textContent = '登出';
+                registerLink.href = '#';
+                registerLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    localStorage.removeItem('user');
+                    window.location.href = 'index.html';
+                });
+            }
+        }
+        checkLogin();
+    </script>
 </body>
 </html>

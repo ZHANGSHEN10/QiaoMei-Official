@@ -61,7 +61,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 
 // 滾動監聽 - 更新導航 active 狀態
 const sections = document.querySelectorAll('section');
-const navLinks = document.querySelectorAll('.nav-menu a:not(.btn-download)');
+const navLinks = document.querySelectorAll('.nav-menu a:not(.btn-download):not(.btn-member)');
 
 window.addEventListener('scroll', () => {
     let current = '';
