@@ -19,6 +19,7 @@
             <div class="nav-time" id="currentTime"></div>
             <div style="display: flex; align-items: center; gap: 10px;">
                 <span id="apiStatus" style="font-size: 12px; color: #10b981;">● 正常</span>
+                <a href="status.html" style="font-size: 12px; color: var(--primary-light); text-decoration: none; padding: 5px 10px; border: 1px solid var(--primary-light); border-radius: 5px;">系統狀態</a>
                 <ul class="nav-menu">
                 <li><a href="#home" class="active">首頁</a></li>
                 <li><a href="#about">遊戲介紹</a></li>
@@ -274,24 +275,36 @@
     <script src="script.js"></script>
     <script>
         const apiUrl = 'https://game-backend-20jn.onrender.com';
+        
+        function updateTime() {
+            const now = new Date();
+            const time = now.getHours().toString().padStart(2, '0') + ':' + 
+                       now.getMinutes().toString().padStart(2, '0') + ':' + 
+                       now.getSeconds().toString().padStart(2, '0');
+            const statusEl = document.getElementById('apiStatus');
+            if (statusEl) {
+                statusEl.textContent = '● ' + time;
+            }
+        }
+        
         async function checkAPIStatus() {
             const statusEl = document.getElementById('apiStatus');
             try {
                 const response = await fetch(`${apiUrl}/api/test`, { method: 'GET' });
                 if (response.ok) {
                     statusEl.style.color = '#10b981';
-                    statusEl.textContent = '● 正常';
                 } else {
                     statusEl.style.color = '#ef4444';
-                    statusEl.textContent = '● 異常';
                 }
             } catch (e) {
                 statusEl.style.color = '#ef4444';
-                statusEl.textContent = '● 異常';
             }
         }
+        
+        updateTime();
+        setInterval(updateTime, 1000);
         checkAPIStatus();
-        setInterval(checkAPIStatus, 60000);
+        setInterval(checkAPIStatus, 30000);
     </script>
 </body>
 </html>
