@@ -10,11 +10,7 @@ const allowedOrigins = [
 const app = express();
 app.use(cors({
   origin: function(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(null, true);
-    }
+    callback(null, true);
   },
   credentials: true
 }));
@@ -38,6 +34,14 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
+
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'API is running' });
+});
+
+app.get('/api/test', (req, res) => {
+  res.json({ status: 'success', message: 'Backend API is working!' });
+});
 
 app.post('/api/register', async (req, res) => {
   try {
@@ -109,11 +113,9 @@ app.post('/api/forgot-password', async (req, res) => {
     const email = userData.email;
 
     const link = await admin.auth().generatePasswordResetLink(email);
-    console.log('Password reset link:', link);
 
     res.json({ success: true, message: '重設連結已發送' });
   } catch (error) {
-    console.error('Forgot password error:', error);
     res.status(400).json({ success: false, error: error.message });
   }
 });
