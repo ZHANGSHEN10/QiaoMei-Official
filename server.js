@@ -10,11 +10,7 @@ const allowedOrigins = [
 const app = express();
 app.use(cors({
   origin: function(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(null, true);
-    }
+    callback(null, true);
   },
   credentials: true
 }));
@@ -38,6 +34,14 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
+
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'API is running' });
+});
+
+app.get('/api/test', (req, res) => {
+  res.json({ status: 'success', message: 'Backend API is working!' });
+});
 
 app.post('/api/register', async (req, res) => {
   try {
@@ -63,38 +67,55 @@ app.post('/api/register', async (req, res) => {
 
 app.post('/api/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
-    const userRecord = await admin.auth().getUserByEmail(email);
-    const idToken = await admin.auth().createCustomToken(userRecord.uid);
-
-    const userDoc = await db.collection('users').doc(userRecord.uid).get();
+    const usersRef = db.collection('users');
+    const snapshot = await usersRef.where('username', '==', username).get();
+    
+    if (snapshot.empty) {
+      return res.status(400).json({ success: false, error: '帳號或密碼錯誤' });
+    }
+    
+    const userDoc = snapshot.docs[0];
     const userData = userDoc.data();
+    const uid = userDoc.id;
+    
+    await admin.auth().getUser(uid);
+    const idToken = await admin.auth().createCustomToken(uid);
 
     res.json({ 
       success: true, 
       user: {
-        uid: userRecord.uid,
-        username: userData?.username,
-        email: userRecord.email
+        uid: uid,
+        username: userData.username,
+        email: userData.email
       },
       token: idToken
     });
   } catch (error) {
-    res.status(400).json({ success: false, error: '電子郵件或密碼錯誤' });
+    res.status(400).json({ success: false, error: '帳號或密碼錯誤' });
   }
 });
 
 app.post('/api/forgot-password', async (req, res) => {
   try {
-    const { email } = req.body;
+    const { username } = req.body;
+
+    const usersRef = db.collection('users');
+    const snapshot = await usersRef.where('username', '==', username).get();
+    
+    if (snapshot.empty) {
+      return res.status(400).json({ success: false, error: '找不到此帳號' });
+    }
+    
+    const userDoc = snapshot.docs[0];
+    const userData = userDoc.data();
+    const email = userData.email;
 
     const link = await admin.auth().generatePasswordResetLink(email);
-    console.log('Password reset link:', link);
 
     res.json({ success: true, message: '重設連結已發送' });
   } catch (error) {
-    console.error('Forgot password error:', error);
     res.status(400).json({ success: false, error: error.message });
   }
 });
