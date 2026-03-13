@@ -65,34 +65,87 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
+const https = require('https');
+
+const FIREBASE_WEB_API_KEY = 'AIzaSyB-tmjRpFHD9aCCUKUoRJNSI_-mS7WEdtg';
+
+function verifyPassword(email, password) {
+  return new Promise((resolve, reject) => {
+    const postData = JSON.stringify({
+      email: email,
+      password: password,
+      returnSecureToken: true
+    });
+
+    const options = {
+      hostname: 'www.googleapis.com',
+      port: 443,
+      path: `/identitytoolkit/v3/relyingparty/verifyPassword?key=${FIREBASE_WEB_API_KEY}`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const result = JSON.parse(data);
+          if (result.idToken) {
+            resolve(result);
+          } else {
+            reject(new Error(result.error?.message || '密碼錯誤'));
+          }
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.write(postData);
+    req.end();
+  });
+}
+
 app.post('/api/login', async (req, res) => {
   try {
     const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ success: false, error: '請輸入帳號和密碼' });
+    }
 
     const usersRef = db.collection('users');
     const snapshot = await usersRef.where('username', '==', username).get();
     
     if (snapshot.empty) {
-      return res.status(400).json({ success: false, error: '帳號或密碼錯誤' });
+      return res.status(400).json({ success: false, error: '帳號不存在' });
     }
     
     const userDoc = snapshot.docs[0];
     const userData = userDoc.data();
-    const uid = userDoc.id;
+    const email = userData.email;
     
-    await admin.auth().getUser(uid);
-    const idToken = await admin.auth().createCustomToken(uid);
+    await verifyPassword(email, password);
+    
+    const userRecord = await admin.auth().getUserByEmail(email);
+    const idToken = await admin.auth().createCustomToken(userRecord.uid);
 
     res.json({ 
       success: true, 
       user: {
-        uid: uid,
+        uid: userRecord.uid,
         username: userData.username,
-        email: userData.email
+        email: email
       },
       token: idToken
     });
   } catch (error) {
+    console.error('Login error:', error.message);
     res.status(400).json({ success: false, error: '帳號或密碼錯誤' });
   }
 });
