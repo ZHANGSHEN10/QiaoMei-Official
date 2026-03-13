@@ -66,6 +66,8 @@
         <div class="status-header">
             <h1 class="status-title">系統<span>狀態</span></h1>
             <p class="last-updated">最後更新：<span id="lastUpdated">載入中...</span></p>
+            <p style="margin-top: 10px; font-size: 14px; color: var(--warning);">此頁面為官方網站系統狀態，並非伺服器運行狀態</p>
+            <p style="margin-top: 5px; font-size: 14px; color: var(--text-muted);">伺服器有無開啟請至Discord <a href="https://discord.com/channels/1426946931950882888/1429586582377074729" target="_blank" style="color: var(--primary-light); text-decoration: none;">🟣➛【＃運行狀態】</a> 查看</p>
         </div>
         <div class="overall-status">
             <div class="overall-icon checking" id="overallIcon"><i class="fas fa-spinner fa-spin"></i></div>
@@ -198,8 +200,22 @@
                 overallText.className = 'overall-text offline';
                 overallText.textContent = '服務異常';
             }
-            document.getElementById('lastUpdated').textContent = new Date().toLocaleString('zh-TW');
+            const now = new Date();
+            const time = now.getHours().toString().padStart(2, '0') + ':' + 
+                       now.getMinutes().toString().padStart(2, '0') + ':' + 
+                       now.getSeconds().toString().padStart(2, '0');
+            document.getElementById('lastUpdated').textContent = time;
         }
+        function updateTime() {
+            const now = new Date();
+            const time = now.getHours().toString().padStart(2, '0') + ':' + 
+                       now.getMinutes().toString().padStart(2, '0') + ':' + 
+                       now.getSeconds().toString().padStart(2, '0');
+            const el = document.getElementById('lastUpdated');
+            if (el) el.textContent = time;
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
         checkAll();
         setInterval(checkAll, 30000);
     </script>
