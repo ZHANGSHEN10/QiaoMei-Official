@@ -173,5 +173,28 @@ app.post('/api/forgot-password', async (req, res) => {
   }
 });
 
+app.post('/api/validate-session', async (req, res) => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      return res.json({ valid: false });
+    }
+
+    await admin.auth().verifyIdToken(idToken);
+    res.json({ valid: true });
+  } catch (error) {
+    res.json({ valid: false });
+  }
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
