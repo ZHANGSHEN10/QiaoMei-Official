@@ -198,6 +198,93 @@
             transform: none;
         }
 
+        .login-btn .btn-loading {
+            display: none;
+        }
+
+        .login-btn.loading .btn-text {
+            display: none;
+        }
+
+        .login-btn.loading .btn-loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .message {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .message.show {
+            display: flex;
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .message.success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #6ee7b7;
+        }
+
+        .message.info {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #a5b4fc;
+        }
+
+        .message i {
+            font-size: 18px;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .loading-spinner {
+            text-align: center;
+        }
+
+        .loading-spinner i {
+            font-size: 50px;
+            color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-spinner p {
+            margin-top: 20px;
+            color: var(--text-muted);
+        }
+
         .divider {
             display: flex;
             align-items: center;
@@ -305,40 +392,39 @@
             <h1 class="login-title">會員登入</h1>
             <p class="login-subtitle">歡迎回來，冒險者</p>
 
+            <div id="messageBox" class="message">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="messageText"></span>
+            </div>
+
             <form id="loginForm">
                 <div class="form-group">
                     <label>帳號</label>
-                    <input type="text" name="username" placeholder="請輸入帳號" required>
+                    <input type="text" name="username" id="username" placeholder="請輸入帳號" required minlength="3" maxlength="20">
                 </div>
                 <div class="form-group">
                     <label>密碼</label>
-                    <input type="password" name="password" placeholder="請輸入密碼" required>
+                    <input type="password" name="password" id="password" placeholder="請輸入密碼" required minlength="6">
                 </div>
                 <div class="forgot-password">
                     <a href="forgot-password.html">忘記密碼？</a>
                 </div>
-                <button type="submit" class="login-btn">登入</button>
+                <button type="submit" class="login-btn" id="loginBtn">
+                    <span class="btn-text">登入</span>
+                    <span class="btn-loading"><i class="fas fa-spinner fa-spin"></i> 登入中...</span>
+                </button>
             </form>
-
-            <div class="divider">
-                <span>或使用以下方式登入</span>
-            </div>
-
-            <div class="social-login">
-                <button class="social-btn">
-                    <i class="fab fa-google"></i>
-                </button>
-                <button class="social-btn">
-                    <i class="fab fa-facebook-f"></i>
-                </button>
-                <button class="social-btn">
-                    <i class="fab fa-discord"></i>
-                </button>
-            </div>
 
             <p class="register-link">
                 還沒有帳號？ <a href="register.html">立即註冊</a>
             </p>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner"></i>
+            <p>正在跳轉...</p>
         </div>
     </div>
 
@@ -349,44 +435,113 @@
     </footer>
 
     <script>
+        const apiUrl = 'https://game-backend-20jn.onrender.com';
+        let isSubmitting = false;
+
+        function showMessage(type, text) {
+            const messageBox = document.getElementById('messageBox');
+            const messageText = document.getElementById('messageText');
+            messageBox.className = `message ${type} show`;
+            
+            const icons = {
+                error: 'fa-exclamation-circle',
+                success: 'fa-check-circle',
+                info: 'fa-info-circle'
+            };
+            messageBox.querySelector('i').className = `fas ${icons[type]}`;
+            messageText.textContent = text;
+        }
+
+        function hideMessage() {
+            document.getElementById('messageBox').classList.remove('show');
+        }
+
+        function setLoading(loading) {
+            const btn = document.getElementById('loginBtn');
+            const inputs = document.querySelectorAll('input');
+            
+            if (loading) {
+                btn.classList.add('loading');
+                btn.disabled = true;
+                inputs.forEach(input => input.disabled = true);
+                isSubmitting = true;
+            } else {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                inputs.forEach(input => input.disabled = false);
+                isSubmitting = false;
+            }
+        }
+
+        async function fetchWithTimeout(url, options = {}, timeout = 10000) {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+            try {
+                const response = await fetch(url, { ...options, signal: controller.signal });
+                clearTimeout(id);
+                return response;
+            } catch (e) {
+                clearTimeout(id);
+                throw e;
+            }
+        }
+
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const form = e.target;
-            const username = form.username.value;
-            const password = form.password.value;
+            if (isSubmitting) return;
             
-            const btn = form.querySelector('.login-btn');
-            btn.disabled = true;
-            btn.textContent = '登入中...';
+            hideMessage();
             
-            const apiUrl = 'https://game-backend-20jn.onrender.com';
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            
+            if (!username || username.length < 3) {
+                showMessage('error', '帳號至少需要 3 個字元');
+                return;
+            }
+            
+            if (!password || password.length < 6) {
+                showMessage('error', '密碼至少需要 6 個字元');
+                return;
+            }
+            
+            setLoading(true);
             
             try {
-                const response = await fetch(`${apiUrl}/api/login`, {
+                const response = await fetchWithTimeout(`${apiUrl}/api/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ username, password })
-                });
+                }, 15000);
                 
                 const data = await response.json();
                 
                 if (data.success) {
+                    showMessage('success', '登入成功，正在跳轉...');
                     localStorage.setItem('user', JSON.stringify(data.user));
-                    alert('登入成功！');
-                    window.location.href = 'member.html';
+                    
+                    setTimeout(() => {
+                        window.location.href = 'member.html';
+                    }, 1000);
                 } else {
-                    alert('登入失敗：' + data.error);
+                    showMessage('error', data.error || '登入失敗，請檢查帳號密碼');
+                    setLoading(false);
                 }
             } catch (error) {
-                alert('連線錯誤，請稍後再試');
+                if (error.name === 'AbortError') {
+                    showMessage('error', '連線逾時，伺服器可能正在喚醒中，請稍後再試');
+                } else {
+                    showMessage('error', '連線失敗，請檢查網路或稍後再試');
+                }
+                setLoading(false);
             }
-            
-            btn.disabled = false;
-            btn.textContent = '登入';
         });
+
+        document.getElementById('username').addEventListener('input', hideMessage);
+        document.getElementById('password').addEventListener('input', hideMessage);
     </script>
 </body>
 </html>

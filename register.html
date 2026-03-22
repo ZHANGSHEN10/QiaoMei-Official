@@ -176,6 +176,62 @@
             box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
         }
 
+        .register-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .register-btn .btn-loading {
+            display: none;
+        }
+
+        .register-btn.loading .btn-text {
+            display: none;
+        }
+
+        .register-btn.loading .btn-loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .message {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .message.show {
+            display: flex;
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .message.success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #6ee7b7;
+        }
+
+        .message.info {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #a5b4fc;
+        }
+
+        .message i {
+            font-size: 18px;
+        }
+
         .divider {
             display: flex;
             align-items: center;
@@ -283,41 +339,33 @@
             <h1 class="register-title">會員註冊</h1>
             <p class="register-subtitle">建立帳號，展開你的冒險之旅</p>
 
+            <div id="messageBox" class="message">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="messageText"></span>
+            </div>
+
             <form id="registerForm">
                 <div class="form-group">
                     <label>帳號</label>
-                    <input type="text" name="username" placeholder="請輸入帳號" required>
+                    <input type="text" name="username" id="username" placeholder="請輸入帳號" required minlength="3" maxlength="20">
                 </div>
                 <div class="form-group">
                     <label>電子郵件</label>
-                    <input type="email" name="email" placeholder="請輸入電子郵件" required>
+                    <input type="email" name="email" id="email" placeholder="請輸入電子郵件" required>
                 </div>
                 <div class="form-group">
                     <label>密碼</label>
-                    <input type="password" name="password" placeholder="請輸入密碼" required>
+                    <input type="password" name="password" id="password" placeholder="請輸入密碼（至少 6 個字元）" required minlength="6">
                 </div>
                 <div class="form-group">
                     <label>確認密碼</label>
-                    <input type="password" name="confirmPassword" placeholder="請再次輸入密碼" required>
+                    <input type="password" name="confirmPassword" id="confirmPassword" placeholder="請再次輸入密碼" required>
                 </div>
-                <button type="submit" class="register-btn">註冊</button>
+                <button type="submit" class="register-btn" id="registerBtn">
+                    <span class="btn-text">註冊</span>
+                    <span class="btn-loading"><i class="fas fa-spinner fa-spin"></i> 註冊中...</span>
+                </button>
             </form>
-
-            <div class="divider">
-                <span>或使用以下方式註冊</span>
-            </div>
-
-            <div class="social-register">
-                <button class="social-btn">
-                    <i class="fab fa-google"></i>
-                </button>
-                <button class="social-btn">
-                    <i class="fab fa-facebook-f"></i>
-                </button>
-                <button class="social-btn">
-                    <i class="fab fa-discord"></i>
-                </button>
-            </div>
 
             <p class="login-link">
                 已經有帳號了？ <a href="login.html">登入</a>
@@ -332,49 +380,124 @@
     </footer>
 
     <script>
+        const apiUrl = 'https://game-backend-20jn.onrender.com';
+        let isSubmitting = false;
+
+        function showMessage(type, text) {
+            const messageBox = document.getElementById('messageBox');
+            const messageText = document.getElementById('messageText');
+            messageBox.className = `message ${type} show`;
+            
+            const icons = {
+                error: 'fa-exclamation-circle',
+                success: 'fa-check-circle',
+                info: 'fa-info-circle'
+            };
+            messageBox.querySelector('i').className = `fas ${icons[type]}`;
+            messageText.textContent = text;
+        }
+
+        function hideMessage() {
+            document.getElementById('messageBox').classList.remove('show');
+        }
+
+        function setLoading(loading) {
+            const btn = document.getElementById('registerBtn');
+            const inputs = document.querySelectorAll('input');
+            
+            if (loading) {
+                btn.classList.add('loading');
+                btn.disabled = true;
+                inputs.forEach(input => input.disabled = true);
+                isSubmitting = true;
+            } else {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                inputs.forEach(input => input.disabled = false);
+                isSubmitting = false;
+            }
+        }
+
+        async function fetchWithTimeout(url, options = {}, timeout = 10000) {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+            try {
+                const response = await fetch(url, { ...options, signal: controller.signal });
+                clearTimeout(id);
+                return response;
+            } catch (e) {
+                clearTimeout(id);
+                throw e;
+            }
+        }
+
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const form = e.target;
-            const username = form.username.value;
-            const email = form.email.value;
-            const password = form.password.value;
-            const confirmPassword = form.confirmPassword.value;
+            if (isSubmitting) return;
             
-            if (password !== confirmPassword) {
-                alert('密碼與確認密碼不一致！');
+            hideMessage();
+            
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (!username || username.length < 3) {
+                showMessage('error', '帳號至少需要 3 個字元');
                 return;
             }
             
-            const btn = form.querySelector('.register-btn');
-            btn.disabled = true;
-            btn.textContent = '註冊中...';
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showMessage('error', '請輸入有效的電子郵件格式');
+                return;
+            }
             
-            const apiUrl = 'https://game-backend-20jn.onrender.com';
+            if (!password || password.length < 6) {
+                showMessage('error', '密碼至少需要 6 個字元');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showMessage('error', '密碼與確認密碼不一致');
+                return;
+            }
+            
+            setLoading(true);
             
             try {
-                const response = await fetch(`${apiUrl}/api/register`, {
+                const response = await fetchWithTimeout(`${apiUrl}/api/register`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ username, email, password })
-                });
+                }, 15000);
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    alert('註冊成功！');
-                    window.location.href = 'member.html';
+                    showMessage('success', '註冊成功，正在跳轉...');
+                    setTimeout(() => {
+                        window.location.href = 'member.html';
+                    }, 1000);
                 } else {
-                    alert('註冊失敗：' + data.error);
+                    showMessage('error', data.error || '註冊失敗，請稍後再試');
+                    setLoading(false);
                 }
             } catch (error) {
-                alert('連線錯誤，請稍後再試');
+                if (error.name === 'AbortError') {
+                    showMessage('error', '連線逾時，伺服器可能正在喚醒中，請稍後再試');
+                } else {
+                    showMessage('error', '連線失敗，請檢查網路或稍後再試');
+                }
+                setLoading(false);
             }
-            
-            btn.disabled = false;
-            btn.textContent = '註冊';
+        });
+
+        const inputs = ['username', 'email', 'password', 'confirmPassword'];
+        inputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', hideMessage);
         });
     </script>
 </body>

@@ -605,25 +605,128 @@
 
     <script>
         const apiUrl = 'https://game-backend-20jn.onrender.com';
+        let isValidating = false;
 
-        function checkLogin() {
+        async function fetchWithTimeout(url, options = {}, timeout = 10000) {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+            try {
+                const response = await fetch(url, { ...options, signal: controller.signal });
+                clearTimeout(id);
+                return response;
+            } catch (e) {
+                clearTimeout(id);
+                throw e;
+            }
+        }
+
+        async function validateSession() {
+            if (isValidating) return;
+            isValidating = true;
+            
             const userData = localStorage.getItem('user');
             
-            if (userData) {
-                const user = JSON.parse(userData);
-                document.getElementById('loggedInContent').classList.remove('hidden');
-                document.getElementById('loggedOutContent').classList.add('hidden');
+            if (!userData) {
+                showLoggedOut();
+                isValidating = false;
+                return;
+            }
+            
+            const user = JSON.parse(userData);
+            
+            if (!user.idToken) {
+                showLoggedOut();
+                isValidating = false;
+                return;
+            }
+            
+            try {
+                const response = await fetchWithTimeout(`${apiUrl}/api/validate-session`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ idToken: user.idToken })
+                }, 10000);
                 
-                const username = user.username || user.email.split('@')[0];
-                document.getElementById('welcomeName').textContent = username;
-                document.getElementById('userName').textContent = username;
-                document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+                if (!response.ok) {
+                    localStorage.removeItem('user');
+                    showLoggedOut();
+                    isValidating = false;
+                    return;
+                }
                 
+                const data = await response.json();
+                
+                if (data.valid) {
+                    showLoggedIn(user);
+                    loadUserData(user);
+                } else {
+                    localStorage.removeItem('user');
+                    showLoggedOut();
+                }
+            } catch (error) {
+                if (user && user.username) {
+                    showLoggedIn(user);
+                    loadUserData(user);
+                } else {
+                    localStorage.removeItem('user');
+                    showLoggedOut();
+                }
+            }
+            
+            isValidating = false;
+        }
+
+        function showLoggedIn(user) {
+            document.getElementById('loggedInContent').classList.remove('hidden');
+            document.getElementById('loggedOutContent').classList.add('hidden');
+            
+            const username = user.username || user.email?.split('@')[0] || '冒險者';
+            document.getElementById('welcomeName').textContent = username;
+            document.getElementById('userName').textContent = username;
+            document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+            
+            if (user.createdAt) {
+                const createdDate = new Date(user.createdAt);
                 const now = new Date();
-                document.getElementById('memberDays').textContent = Math.floor((now.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-            } else {
-                document.getElementById('loggedInContent').classList.add('hidden');
-                document.getElementById('loggedOutContent').classList.remove('hidden');
+                const days = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+                document.getElementById('memberDays').textContent = Math.max(1, days + 1);
+            }
+        }
+
+        function showLoggedOut() {
+            document.getElementById('loggedInContent').classList.add('hidden');
+            document.getElementById('loggedOutContent').classList.remove('hidden');
+        }
+
+        function loadUserData(user) {
+            if (user.createdAt) {
+                const createdDate = new Date(user.createdAt);
+                const formattedDate = `${createdDate.getFullYear()}/${String(createdDate.getMonth() + 1).padStart(2, '0')}/${String(createdDate.getDate()).padStart(2, '0')} ${String(createdDate.getHours()).padStart(2, '0')}:${String(createdDate.getMinutes()).padStart(2, '0')}`;
+                document.getElementById('registerTime').textContent = formattedDate;
+            }
+            
+            if (user.lastLoginAt) {
+                const lastLogin = new Date(user.lastLoginAt);
+                const now = new Date();
+                const diffMs = now.getTime() - lastLogin.getTime();
+                const diffMins = Math.floor(diffMs / (1000 * 60));
+                
+                let timeText;
+                if (diffMins < 1) {
+                    timeText = '剛剛';
+                } else if (diffMins < 60) {
+                    timeText = `${diffMins} 分鐘前`;
+                } else {
+                    const diffHours = Math.floor(diffMins / 60);
+                    if (diffHours < 24) {
+                        timeText = `${diffHours} 小時前`;
+                    } else {
+                        timeText = `${Math.floor(diffHours / 24)} 天前`;
+                    }
+                }
+                document.getElementById('lastLogin').textContent = timeText;
             }
         }
 
@@ -632,7 +735,16 @@
             window.location.href = 'index.html';
         });
 
-        checkLogin();
+        window.addEventListener('online', validateSession);
+        window.addEventListener('offline', () => {
+            const userData = localStorage.getItem('user');
+            if (userData) {
+                const user = JSON.parse(userData);
+                showLoggedIn(user);
+            }
+        });
+
+        validateSession();
     </script>
 </body>
 </html>
