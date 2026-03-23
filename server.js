@@ -47,7 +47,10 @@ app.post('/api/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
     
-    const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown';
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+                req.connection?.remoteAddress || 
+                req.socket?.remoteAddress || 
+                'unknown';
 
     const userRecord = await admin.auth().createUser({
       email,
@@ -61,6 +64,8 @@ app.post('/api/register', async (req, res) => {
       ip: ip,
       createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
+
+    console.log(`[${new Date().toISOString()}] 新註冊 - 帳號: ${username}, IP: ${ip}`);
 
     res.status(201).json({ success: true, uid: userRecord.uid });
   } catch (error) {
@@ -173,6 +178,28 @@ app.post('/api/forgot-password', async (req, res) => {
     res.json({ success: true, message: '重設連結已發送' });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/admin/registrations', async (req, res) => {
+  try {
+    const usersRef = db.collection('users');
+    const snapshot = await usersRef.orderBy('createdAt', 'desc').limit(50).get();
+    
+    const registrations = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      registrations.push({
+        username: data.username,
+        email: data.email,
+        ip: data.ip || '未知',
+        createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null
+      });
+    });
+    
+    res.json({ success: true, registrations });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
