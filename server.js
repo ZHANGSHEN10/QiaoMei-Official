@@ -46,6 +46,8 @@ app.get('/api/test', (req, res) => {
 app.post('/api/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
+    
+    const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown';
 
     const userRecord = await admin.auth().createUser({
       email,
@@ -56,6 +58,7 @@ app.post('/api/register', async (req, res) => {
     await db.collection('users').doc(userRecord.uid).set({
       username,
       email,
+      ip: ip,
       createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
